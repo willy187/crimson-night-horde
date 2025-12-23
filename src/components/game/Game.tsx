@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade } from '@/types/game';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { useKeyboard } from '@/hooks/useKeyboard';
+import { useTouchJoystick } from '@/hooks/useTouchJoystick';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   createEnemy, 
   createProjectile, 
@@ -15,6 +17,7 @@ import { GameHUD } from './GameHUD';
 import { LevelUpScreen } from './LevelUpScreen';
 import { GameOverScreen } from './GameOverScreen';
 import { StartScreen } from './StartScreen';
+import { VirtualJoystick } from './VirtualJoystick';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1920;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 1080;
@@ -57,6 +60,8 @@ export const Game: React.FC = () => {
   });
 
   const keys = useKeyboard();
+  const { touch, joystickPosition, handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchJoystick();
+  const isMobile = useIsMobile();
   const lastFireTime = useRef(0);
   const lastSpawnTime = useRef(0);
 
@@ -111,13 +116,13 @@ export const Game: React.FC = () => {
         // Update game time
         gameTime += deltaTime;
 
-        // Move player
+        // Move player (keyboard OR touch)
         let dx = 0;
         let dy = 0;
-        if (keys.current.up) dy -= 1;
-        if (keys.current.down) dy += 1;
-        if (keys.current.left) dx -= 1;
-        if (keys.current.right) dx += 1;
+        if (keys.current.up || touch.current.up) dy -= 1;
+        if (keys.current.down || touch.current.down) dy += 1;
+        if (keys.current.left || touch.current.left) dx -= 1;
+        if (keys.current.right || touch.current.right) dx += 1;
 
         if (dx !== 0 || dy !== 0) {
           const normalized = normalize(dx, dy);
@@ -281,7 +286,7 @@ export const Game: React.FC = () => {
         };
       });
     },
-    [keys]
+    [keys, touch]
   );
 
   useGameLoop(gameLoop, gameStarted && !gameState.isGameOver && !gameState.isLevelingUp);
@@ -304,7 +309,12 @@ export const Game: React.FC = () => {
   }
 
   return (
-    <div className="game-container">
+    <div 
+      className="game-container"
+      onTouchStart={isMobile ? handleTouchStart : undefined}
+      onTouchMove={isMobile ? handleTouchMove : undefined}
+      onTouchEnd={isMobile ? handleTouchEnd : undefined}
+    >
       <GameCanvas
         gameState={gameState}
         canvasWidth={CANVAS_WIDTH}
@@ -317,6 +327,8 @@ export const Game: React.FC = () => {
         gameTime={gameState.gameTime}
         kills={gameState.kills}
       />
+
+      {isMobile && <VirtualJoystick joystickPosition={joystickPosition} />}
 
       {gameState.isLevelingUp && (
         <LevelUpScreen
