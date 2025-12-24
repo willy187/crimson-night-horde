@@ -7,7 +7,11 @@ export interface KeyState {
   right: boolean;
 }
 
-export const useKeyboard = () => {
+export interface KeyboardActions {
+  pause: boolean;
+}
+
+export const useKeyboard = (onPause?: () => void) => {
   const keys = useRef<KeyState>({
     up: false,
     down: false,
@@ -33,6 +37,10 @@ export const useKeyboard = () => {
         case 'd':
         case 'arrowright':
           keys.current.right = true;
+          break;
+        case ' ':
+          e.preventDefault();
+          onPause?.();
           break;
       }
     };
@@ -65,7 +73,7 @@ export const useKeyboard = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [onPause]);
 
   return keys;
 };
