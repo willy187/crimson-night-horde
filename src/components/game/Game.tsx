@@ -59,7 +59,14 @@ export const Game: React.FC = () => {
     availableUpgrades: [],
   });
 
-  const keys = useKeyboard();
+  const togglePause = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.isGameOver || prev.isLevelingUp) return prev;
+      return { ...prev, isPaused: !prev.isPaused };
+    });
+  }, []);
+
+  const keys = useKeyboard(togglePause);
   const { touch, joystickPosition, handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchJoystick();
   const isMobile = useIsMobile();
   const lastFireTime = useRef(0);
@@ -320,7 +327,16 @@ export const Game: React.FC = () => {
         canvasWidth={CANVAS_WIDTH}
         canvasHeight={CANVAS_HEIGHT}
       />
-      
+
+      {gameState.isPaused && !gameState.isLevelingUp && !gameState.isGameOver && (
+        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="text-center text-white">
+            <h2 className="text-4xl font-bold mb-4">일시정지</h2>
+            <p className="text-lg text-gray-300">스페이스바를 눌러 계속하기</p>
+          </div>
+        </div>
+      )}
+
       <GameHUD
         player={gameState.player}
         weapon={gameState.weapon}
