@@ -180,4 +180,30 @@
       opacity: 1;
     }
   }
+
+  @keyframes ticker-left {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-33.333%);
+    }
+  }
+
+  @keyframes ticker-right {
+    0% {
+      transform: translateX(-33.333%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-ticker-left {
+    animation: ticker-left 20s linear infinite;
+  }
+
+  .animate-ticker-right {
+    animation: ticker-right 20s linear infinite;
+  }
 }
