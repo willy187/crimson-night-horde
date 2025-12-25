@@ -48,6 +48,7 @@ const initialWeapon: Weapon = {
 export const Game: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [showInitialInput, setShowInitialInput] = useState(false);
+  const [hasCheckedTopTen, setHasCheckedTopTen] = useState(false);
   const [topTenRank, setTopTenRank] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
   const [gameState, setGameState] = useState<GameState>({
@@ -102,6 +103,7 @@ export const Game: React.FC = () => {
 
   const handleRestart = useCallback(() => {
     setShowInitialInput(false);
+    setHasCheckedTopTen(false);
     setTopTenRank(0);
     setFinalScore(0);
     resetGame();
@@ -114,7 +116,8 @@ export const Game: React.FC = () => {
 
   // Check for top 10 when game ends
   useEffect(() => {
-    if (gameState.isGameOver && !showInitialInput) {
+    if (gameState.isGameOver && !hasCheckedTopTen) {
+      setHasCheckedTopTen(true);
       const score = calculateScore(gameState.kills, gameState.gameTime, gameState.player.level);
       setFinalScore(score);
       
@@ -125,7 +128,7 @@ export const Game: React.FC = () => {
         }
       });
     }
-  }, [gameState.isGameOver, gameState.kills, gameState.gameTime, gameState.player.level, showInitialInput, calculateScore]);
+  }, [gameState.isGameOver, gameState.kills, gameState.gameTime, gameState.player.level, hasCheckedTopTen, calculateScore]);
 
   const handleSubmitInitials = useCallback(async (initials: string) => {
     await submitHighScore(
