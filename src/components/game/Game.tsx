@@ -37,7 +37,7 @@ const initialPlayer: Player = {
 
 const initialWeapon: Weapon = {
   name: 'Magic Orb',
-  damage: 10,
+  damage: 11,
   fireRate: 0.8,
   projectileCount: 1,
   projectileSpeed: 400,
