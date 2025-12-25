@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { LeaderboardTicker } from './LeaderboardTicker';
 
 interface StartScreenProps {
   onStart: () => void;
@@ -8,6 +9,11 @@ interface StartScreenProps {
 export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   return (
     <div className="start-screen">
+      {/* Top Ticker */}
+      <div className="absolute top-0 left-0 right-0">
+        <LeaderboardTicker direction="left" />
+      </div>
+
       <div className="text-center animate-float">
         <h1 className="text-5xl md:text-7xl font-bold text-primary mb-4 title-glow font-pixel">
           SURVIVOR
@@ -38,6 +44,11 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
           </div>
         </div>
         <p className="mt-4 text-sm">자동으로 가장 가까운 적을 공격합니다</p>
+      </div>
+
+      {/* Bottom Ticker */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <LeaderboardTicker direction="right" />
       </div>
     </div>
   );
