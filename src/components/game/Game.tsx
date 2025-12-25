@@ -18,6 +18,8 @@ import { LevelUpScreen } from './LevelUpScreen';
 import { GameOverScreen } from './GameOverScreen';
 import { StartScreen } from './StartScreen';
 import { VirtualJoystick } from './VirtualJoystick';
+import { InitialInputScreen } from './InitialInputScreen';
+import { Leaderboard, checkTopTen, submitHighScore } from './Leaderboard';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1920;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 1080;
@@ -45,6 +47,9 @@ const initialWeapon: Weapon = {
 
 export const Game: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
+  const [showInitialInput, setShowInitialInput] = useState(false);
+  const [topTenRank, setTopTenRank] = useState(0);
+  const [finalScore, setFinalScore] = useState(0);
   const [gameState, setGameState] = useState<GameState>({
     player: { ...initialPlayer },
     enemies: [],
@@ -96,8 +101,46 @@ export const Game: React.FC = () => {
   }, [resetGame]);
 
   const handleRestart = useCallback(() => {
+    setShowInitialInput(false);
+    setTopTenRank(0);
+    setFinalScore(0);
     resetGame();
   }, [resetGame]);
+
+  // Calculate score
+  const calculateScore = useCallback((kills: number, gameTime: number, level: number) => {
+    return kills * 100 + Math.floor(gameTime) * 10 + level * 500;
+  }, []);
+
+  // Check for top 10 when game ends
+  useEffect(() => {
+    if (gameState.isGameOver && !showInitialInput) {
+      const score = calculateScore(gameState.kills, gameState.gameTime, gameState.player.level);
+      setFinalScore(score);
+      
+      checkTopTen(score).then(({ qualifies, rank }) => {
+        if (qualifies) {
+          setTopTenRank(rank);
+          setShowInitialInput(true);
+        }
+      });
+    }
+  }, [gameState.isGameOver, gameState.kills, gameState.gameTime, gameState.player.level, showInitialInput, calculateScore]);
+
+  const handleSubmitInitials = useCallback(async (initials: string) => {
+    await submitHighScore(
+      initials,
+      finalScore,
+      gameState.gameTime,
+      gameState.kills,
+      gameState.player.level
+    );
+    setShowInitialInput(false);
+  }, [finalScore, gameState.gameTime, gameState.kills, gameState.player.level]);
+
+  const handleSkipInitials = useCallback(() => {
+    setShowInitialInput(false);
+  }, []);
 
   const handleSelectUpgrade = useCallback((upgrade: Upgrade) => {
     setGameState((prev) => {
@@ -311,6 +354,9 @@ export const Game: React.FC = () => {
     return (
       <div className="game-container">
         <StartScreen onStart={handleStart} />
+        <div className="absolute bottom-4 left-4 z-10 w-80">
+          <Leaderboard />
+        </div>
       </div>
     );
   }
@@ -354,12 +400,22 @@ export const Game: React.FC = () => {
         />
       )}
 
-      {gameState.isGameOver && (
+      {showInitialInput && (
+        <InitialInputScreen
+          rank={topTenRank}
+          score={finalScore}
+          onSubmit={handleSubmitInitials}
+          onSkip={handleSkipInitials}
+        />
+      )}
+
+      {gameState.isGameOver && !showInitialInput && (
         <GameOverScreen
           gameTime={gameState.gameTime}
           kills={gameState.kills}
           level={gameState.player.level}
           onRestart={handleRestart}
+          score={finalScore}
         />
       )}
     </div>

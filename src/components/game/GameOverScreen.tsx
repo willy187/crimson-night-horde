@@ -1,10 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Leaderboard } from './Leaderboard';
 
 interface GameOverScreenProps {
   gameTime: number;
   kills: number;
   level: number;
+  score: number;
   onRestart: () => void;
 }
 
@@ -12,6 +14,7 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
   gameTime,
   kills,
   level,
+  score,
   onRestart,
 }) => {
   const formatTime = (seconds: number) => {
@@ -27,6 +30,10 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
       </h1>
       
       <div className="bg-card rounded-xl p-8 border border-border mb-8">
+        <div className="text-center mb-6">
+          <div className="text-4xl font-bold text-primary">{score.toLocaleString()}</div>
+          <div className="text-muted-foreground">최종 점수</div>
+        </div>
         <div className="grid grid-cols-3 gap-8 text-center">
           <div>
             <div className="text-3xl font-bold text-primary">{formatTime(gameTime)}</div>
@@ -41,6 +48,10 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             <div className="text-muted-foreground">달성 레벨</div>
           </div>
         </div>
+      </div>
+
+      <div className="mb-8 w-80">
+        <Leaderboard currentScore={score} />
       </div>
       
       <Button
