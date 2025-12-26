@@ -7,6 +7,7 @@ interface GameHUDProps {
   weapon: Weapon;
   gameTime: number;
   kills: number;
+  isMobile?: boolean;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -14,6 +15,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   weapon,
   gameTime,
   kills,
+  isMobile = false,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -25,7 +27,6 @@ export const GameHUD: React.FC<GameHUDProps> = ({
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
-    // Check initial state
     setIsFullscreen(!!document.fullscreenElement);
 
     return () => {
@@ -53,8 +54,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
   return (
     <div className="hud">
-      {/* Fullscreen exit button */}
-      {isFullscreen && (
+      {/* Fullscreen exit button - Mobile only */}
+      {isMobile && isFullscreen && (
         <button
           onClick={exitFullscreen}
           className="absolute top-4 right-4 z-50 p-2 bg-background/80 backdrop-blur-sm rounded-lg border border-primary/30 text-primary hover:bg-background transition-colors"
