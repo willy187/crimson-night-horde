@@ -4,6 +4,7 @@ import { useGameLoop } from '@/hooks/useGameLoop';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTouchJoystick } from '@/hooks/useTouchJoystick';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useMobileOrientation } from '@/hooks/useMobileOrientation';
 import { 
   createEnemy, 
   createProjectile, 
@@ -20,6 +21,7 @@ import { StartScreen } from './StartScreen';
 import { VirtualJoystick } from './VirtualJoystick';
 import { InitialInputScreen } from './InitialInputScreen';
 import { Leaderboard, checkTopTen, submitHighScore } from './Leaderboard';
+import { RotateDeviceOverlay } from './RotateDeviceOverlay';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1920;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 1080;
@@ -75,6 +77,7 @@ export const Game: React.FC = () => {
   const keys = useKeyboard(togglePause);
   const { touch, joystickPosition, handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchJoystick();
   const isMobile = useIsMobile();
+  const { isMobile: isMobileDevice, needsRotation, requestFullscreen } = useMobileOrientation();
   const lastFireTime = useRef(0);
   const lastSpawnTime = useRef(0);
 
@@ -353,11 +356,20 @@ export const Game: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Show rotate overlay if mobile and not in landscape
+  if (needsRotation) {
+    return <RotateDeviceOverlay />;
+  }
+
   if (!gameStarted) {
     return (
       <div className="game-container">
-        <StartScreen onStart={handleStart} />
-        <div className="absolute bottom-4 left-4 z-10 w-80">
+        <StartScreen 
+          onStart={handleStart} 
+          isMobile={isMobileDevice}
+          onRequestFullscreen={requestFullscreen}
+        />
+        <div className="absolute bottom-4 left-4 z-10 w-80 hidden sm:block">
           <Leaderboard />
         </div>
       </div>

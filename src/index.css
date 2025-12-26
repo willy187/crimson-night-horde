@@ -199,11 +199,24 @@
     }
   }
 
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
   .animate-ticker-left {
     animation: ticker-left 20s linear infinite;
   }
 
   .animate-ticker-right {
     animation: ticker-right 20s linear infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
   }
 }
