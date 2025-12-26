@@ -403,6 +403,7 @@ export const Game: React.FC = () => {
         weapon={gameState.weapon}
         gameTime={gameState.gameTime}
         kills={gameState.kills}
+        isMobile={isMobileDevice}
       />
 
       {isMobile && <VirtualJoystick joystickPosition={joystickPosition} />}
