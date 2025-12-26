@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Player, Weapon } from '@/types/game';
+import { Minimize2 } from 'lucide-react';
 
 interface GameHUDProps {
   player: Player;
@@ -14,6 +15,33 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   gameTime,
   kills,
 }) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+    // Check initial state
+    setIsFullscreen(!!document.fullscreenElement);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if ((document as any).webkitExitFullscreen) {
+      (document as any).webkitExitFullscreen();
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -25,6 +53,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
   return (
     <div className="hud">
+      {/* Fullscreen exit button */}
+      {isFullscreen && (
+        <button
+          onClick={exitFullscreen}
+          className="absolute top-4 right-4 z-50 p-2 bg-background/80 backdrop-blur-sm rounded-lg border border-primary/30 text-primary hover:bg-background transition-colors"
+          title="전체화면 종료"
+        >
+          <Minimize2 className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Left side - Player stats */}
       <div className="hud-panel min-w-[200px]">
         <div className="text-xs text-muted-foreground mb-1">HEALTH</div>
