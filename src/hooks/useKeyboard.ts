@@ -11,7 +11,7 @@ export interface KeyboardActions {
   pause: boolean;
 }
 
-export const useKeyboard = (onPause?: () => void) => {
+export const useKeyboard = (onPause?: () => void, onMute?: () => void) => {
   const keys = useRef<KeyState>({
     up: false,
     down: false,
@@ -41,6 +41,10 @@ export const useKeyboard = (onPause?: () => void) => {
         case ' ':
           e.preventDefault();
           onPause?.();
+          break;
+        case 'end':
+          e.preventDefault();
+          onMute?.();
           break;
       }
     };
@@ -73,7 +77,7 @@ export const useKeyboard = (onPause?: () => void) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [onPause]);
+  }, [onPause, onMute]);
 
   return keys;
 };

@@ -72,6 +72,16 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 <span className="text-sm">이동</span>
               </div>
             </div>
+            <div className="flex gap-4 sm:gap-8 justify-center flex-wrap mt-3">
+              <div className="flex items-center gap-2">
+                <kbd className="px-2 sm:px-3 py-1 bg-muted rounded text-xs sm:text-sm">Space</kbd>
+                <span className="text-sm">일시정지</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <kbd className="px-2 sm:px-3 py-1 bg-muted rounded text-xs sm:text-sm">End</kbd>
+                <span className="text-sm">사운드</span>
+              </div>
+            </div>
             <p className="mt-4 text-xs sm:text-sm">자동으로 가장 가까운 적을 공격합니다</p>
           </>
         )}
