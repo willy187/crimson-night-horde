@@ -118,6 +118,54 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.restore();
     });
 
+    // Draw explosions
+    gameState.explosions.forEach((explosion) => {
+      const progress = (gameState.gameTime - explosion.startTime) / explosion.duration;
+      if (progress >= 1) return;
+      
+      ctx.save();
+      const alpha = 1 - progress;
+      const currentSize = explosion.size * (0.5 + progress * 1.5);
+      
+      // Outer ring
+      ctx.strokeStyle = explosion.color.replace(')', `, ${alpha * 0.8})`).replace('hsl', 'hsla');
+      ctx.lineWidth = 3 * (1 - progress);
+      ctx.beginPath();
+      ctx.arc(explosion.x, explosion.y, currentSize, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Inner flash
+      const innerGradient = ctx.createRadialGradient(
+        explosion.x, explosion.y, 0,
+        explosion.x, explosion.y, currentSize * 0.6
+      );
+      innerGradient.addColorStop(0, `hsla(45, 100%, 80%, ${alpha * 0.8})`);
+      innerGradient.addColorStop(0.5, explosion.color.replace(')', `, ${alpha * 0.5})`).replace('hsl', 'hsla'));
+      innerGradient.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
+      
+      ctx.fillStyle = innerGradient;
+      ctx.beginPath();
+      ctx.arc(explosion.x, explosion.y, currentSize * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Particles
+      const particleCount = 6;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2;
+        const particleDist = currentSize * (0.8 + progress * 0.5);
+        const px = explosion.x + Math.cos(angle) * particleDist;
+        const py = explosion.y + Math.sin(angle) * particleDist;
+        const particleSize = 4 * (1 - progress);
+        
+        ctx.fillStyle = `hsla(45, 100%, 70%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    });
+
     // Draw player
     const { player } = gameState;
     ctx.save();
