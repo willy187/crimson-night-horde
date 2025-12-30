@@ -63,11 +63,22 @@ export interface Upgrade {
   apply: (player: Player, weapon: Weapon) => { player: Player; weapon: Weapon };
 }
 
+export interface Explosion {
+  id: string;
+  x: number;
+  y: number;
+  startTime: number;
+  duration: number;
+  size: number;
+  color: string;
+}
+
 export interface GameState {
   player: Player;
   enemies: Enemy[];
   projectiles: Projectile[];
   xpGems: XpGem[];
+  explosions: Explosion[];
   weapon: Weapon;
   gameTime: number;
   kills: number;

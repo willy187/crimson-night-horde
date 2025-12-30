@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade } from '@/types/game';
+import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion } from '@/types/game';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTouchJoystick } from '@/hooks/useTouchJoystick';
@@ -59,6 +59,7 @@ export const Game: React.FC = () => {
     enemies: [],
     projectiles: [],
     xpGems: [],
+    explosions: [],
     weapon: { ...initialWeapon },
     gameTime: 0,
     kills: 0,
@@ -68,7 +69,8 @@ export const Game: React.FC = () => {
     availableUpgrades: [],
   });
 
-  const { isMuted, playShoot, playExplosion, toggleMute } = useSoundManager();
+  const { isMuted, playShoot, playExplosion, playLevelUp, playGameOver, startBgm, stopBgm, toggleMute } = useSoundManager();
+  const gameOverSoundPlayed = useRef(false);
 
   const togglePause = useCallback(() => {
     setGameState((prev) => {
@@ -83,7 +85,7 @@ export const Game: React.FC = () => {
   const { isMobile: isMobileDevice, needsRotation, requestFullscreen } = useMobileOrientation();
   const lastFireTime = useRef(0);
   const lastSpawnTime = useRef(0);
-  const pendingSoundsRef = useRef<{ shoots: number; explosions: number }>({ shoots: 0, explosions: 0 });
+  const pendingSoundsRef = useRef<{ shoots: number; explosions: number; levelUp: boolean }>({ shoots: 0, explosions: 0, levelUp: false });
 
   const resetGame = useCallback(() => {
     setGameState({
@@ -91,6 +93,7 @@ export const Game: React.FC = () => {
       enemies: [],
       projectiles: [],
       xpGems: [],
+      explosions: [],
       weapon: { ...initialWeapon },
       gameTime: 0,
       kills: 0,
@@ -101,12 +104,14 @@ export const Game: React.FC = () => {
     });
     lastFireTime.current = 0;
     lastSpawnTime.current = 0;
+    gameOverSoundPlayed.current = false;
   }, []);
 
   const handleStart = useCallback(() => {
     resetGame();
     setGameStarted(true);
-  }, [resetGame]);
+    startBgm();
+  }, [resetGame, startBgm]);
 
   const handleRestart = useCallback(() => {
     setShowInitialInput(false);
@@ -171,7 +176,7 @@ export const Game: React.FC = () => {
       setGameState((prev) => {
         if (prev.isGameOver || prev.isPaused || prev.isLevelingUp) return prev;
 
-        let { player, enemies, projectiles, xpGems, weapon, gameTime, kills } = prev;
+        let { player, enemies, projectiles, xpGems, explosions, weapon, gameTime, kills } = prev;
 
         // Update game time
         gameTime += deltaTime;
@@ -262,6 +267,7 @@ export const Game: React.FC = () => {
 
         // Projectile-enemy collision
         const newXpGems: XpGem[] = [];
+        const newExplosions: Explosion[] = [];
         let projectilesToRemove: Set<string> = new Set();
         
         enemies = enemies.filter((enemy) => {
@@ -281,6 +287,18 @@ export const Game: React.FC = () => {
                 kills++;
                 pendingSoundsRef.current.explosions++;
                 newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
+                // Add explosion effect
+                const explosionColor = enemy.type === 'fast' ? 'hsl(30, 100%, 50%)' : 
+                                       enemy.type === 'tank' ? 'hsl(0, 60%, 50%)' : 'hsl(0, 72%, 51%)';
+                newExplosions.push({
+                  id: `exp-${Date.now()}-${Math.random()}`,
+                  x: enemy.x,
+                  y: enemy.y,
+                  startTime: gameTime,
+                  duration: 0.3,
+                  size: enemy.size * 2,
+                  color: explosionColor,
+                });
                 return false;
               }
             }
@@ -290,6 +308,9 @@ export const Game: React.FC = () => {
 
         projectiles = projectiles.filter((p) => !projectilesToRemove.has(p.id));
         xpGems = [...xpGems, ...newXpGems];
+        
+        // Update explosions (filter expired ones)
+        explosions = [...explosions.filter(exp => gameTime - exp.startTime < exp.duration), ...newExplosions];
 
         // Player collects XP gems
         const XP_COLLECT_RANGE = 50;
@@ -320,6 +341,7 @@ export const Game: React.FC = () => {
           };
           isLevelingUp = true;
           availableUpgrades = getRandomUpgrades(3);
+          pendingSoundsRef.current.levelUp = true;
         }
 
         // Enemy-player collision (damage)
@@ -339,6 +361,7 @@ export const Game: React.FC = () => {
           enemies,
           projectiles,
           xpGems,
+          explosions,
           gameTime,
           kills,
           isGameOver,
@@ -362,9 +385,22 @@ export const Game: React.FC = () => {
         playExplosion();
         pendingSoundsRef.current.explosions = 0;
       }
+      if (pendingSoundsRef.current.levelUp) {
+        playLevelUp();
+        pendingSoundsRef.current.levelUp = false;
+      }
     }, 50);
     return () => clearInterval(interval);
-  }, [playShoot, playExplosion]);
+  }, [playShoot, playExplosion, playLevelUp]);
+
+  // Game over sound and BGM stop
+  useEffect(() => {
+    if (gameState.isGameOver && !gameOverSoundPlayed.current) {
+      gameOverSoundPlayed.current = true;
+      stopBgm();
+      playGameOver();
+    }
+  }, [gameState.isGameOver, stopBgm, playGameOver]);
 
   useGameLoop(gameLoop, gameStarted && !gameState.isGameOver && !gameState.isLevelingUp);
 
