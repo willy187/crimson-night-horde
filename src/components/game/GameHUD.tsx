@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Player, Weapon } from '@/types/game';
-import { Minimize2 } from 'lucide-react';
+import { Minimize2, Volume2, VolumeX } from 'lucide-react';
 
 interface GameHUDProps {
   player: Player;
@@ -8,6 +8,8 @@ interface GameHUDProps {
   gameTime: number;
   kills: number;
   isMobile?: boolean;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -16,6 +18,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   gameTime,
   kills,
   isMobile = false,
+  isMuted = false,
+  onToggleMute,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -54,16 +58,28 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
   return (
     <div className="hud">
-      {/* Fullscreen exit button - Mobile only */}
-      {isMobile && isFullscreen && (
+      {/* Top right buttons */}
+      <div className="absolute top-4 right-4 z-50 flex gap-2">
+        {/* Sound toggle button */}
         <button
-          onClick={exitFullscreen}
-          className="absolute top-4 right-4 z-50 p-2 bg-background/80 backdrop-blur-sm rounded-lg border border-primary/30 text-primary hover:bg-background transition-colors"
-          title="전체화면 종료"
+          onClick={onToggleMute}
+          className="p-2 bg-background/80 backdrop-blur-sm rounded-lg border border-primary/30 text-primary hover:bg-background transition-colors"
+          title={isMuted ? "사운드 켜기" : "사운드 끄기"}
         >
-          <Minimize2 className="w-5 h-5" />
+          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </button>
-      )}
+
+        {/* Fullscreen exit button - Mobile only */}
+        {isMobile && isFullscreen && (
+          <button
+            onClick={exitFullscreen}
+            className="p-2 bg-background/80 backdrop-blur-sm rounded-lg border border-primary/30 text-primary hover:bg-background transition-colors"
+            title="전체화면 종료"
+          >
+            <Minimize2 className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       {/* Left side - Player stats */}
       <div className="hud-panel min-w-[200px]">

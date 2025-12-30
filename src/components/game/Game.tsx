@@ -5,6 +5,7 @@ import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTouchJoystick } from '@/hooks/useTouchJoystick';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileOrientation } from '@/hooks/useMobileOrientation';
+import { useSoundManager } from '@/hooks/useSoundManager';
 import { 
   createEnemy, 
   createProjectile, 
@@ -67,6 +68,8 @@ export const Game: React.FC = () => {
     availableUpgrades: [],
   });
 
+  const { isMuted, playShoot, playExplosion, toggleMute } = useSoundManager();
+
   const togglePause = useCallback(() => {
     setGameState((prev) => {
       if (prev.isGameOver || prev.isLevelingUp) return prev;
@@ -74,12 +77,13 @@ export const Game: React.FC = () => {
     });
   }, []);
 
-  const keys = useKeyboard(togglePause);
+  const keys = useKeyboard(togglePause, toggleMute);
   const { touch, joystickPosition, handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchJoystick();
   const isMobile = useIsMobile();
   const { isMobile: isMobileDevice, needsRotation, requestFullscreen } = useMobileOrientation();
   const lastFireTime = useRef(0);
   const lastSpawnTime = useRef(0);
+  const pendingSoundsRef = useRef<{ shoots: number; explosions: number }>({ shoots: 0, explosions: 0 });
 
   const resetGame = useCallback(() => {
     setGameState({
@@ -227,6 +231,7 @@ export const Game: React.FC = () => {
 
             projectiles = [...projectiles, ...newProjectiles];
             lastFireTime.current = gameTime;
+            pendingSoundsRef.current.shoots++;
           }
         }
 
@@ -274,6 +279,7 @@ export const Game: React.FC = () => {
 
               if (enemy.health <= 0) {
                 kills++;
+                pendingSoundsRef.current.explosions++;
                 newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
                 return false;
               }
@@ -345,6 +351,21 @@ export const Game: React.FC = () => {
     [keys, touch]
   );
 
+  // Play sounds outside of state update
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (pendingSoundsRef.current.shoots > 0) {
+        playShoot();
+        pendingSoundsRef.current.shoots = 0;
+      }
+      if (pendingSoundsRef.current.explosions > 0) {
+        playExplosion();
+        pendingSoundsRef.current.explosions = 0;
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [playShoot, playExplosion]);
+
   useGameLoop(gameLoop, gameStarted && !gameState.isGameOver && !gameState.isLevelingUp);
 
   // Handle window resize
@@ -404,6 +425,8 @@ export const Game: React.FC = () => {
         gameTime={gameState.gameTime}
         kills={gameState.kills}
         isMobile={isMobileDevice}
+        isMuted={isMuted}
+        onToggleMute={toggleMute}
       />
 
       {isMobile && <VirtualJoystick joystickPosition={joystickPosition} />}
