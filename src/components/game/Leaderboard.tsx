@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useI18n } from '@/hooks/useI18n';
 
 interface HighScore {
   id: string;
@@ -17,6 +18,7 @@ interface LeaderboardProps {
 export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
   const [scores, setScores] = useState<HighScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     fetchScores();
@@ -64,18 +66,18 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
   if (loading) {
     return (
       <div className="bg-card/80 rounded-lg p-4 border border-border">
-        <h3 className="text-lg font-bold text-primary mb-3 text-center">🏆 리더보드</h3>
-        <p className="text-center text-muted-foreground">불러오는 중...</p>
+        <h3 className="text-lg font-bold text-primary mb-3 text-center">{t('leaderboard')}</h3>
+        <p className="text-center text-muted-foreground">{t('loading')}</p>
       </div>
     );
   }
 
   return (
     <div className="bg-card/80 rounded-lg p-4 border border-border">
-      <h3 className="text-lg font-bold text-primary mb-3 text-center">🏆 리더보드</h3>
+      <h3 className="text-lg font-bold text-primary mb-3 text-center">{t('leaderboard')}</h3>
       
       {scores.length === 0 ? (
-        <p className="text-center text-muted-foreground text-sm">아직 기록이 없습니다</p>
+        <p className="text-center text-muted-foreground text-sm">{t('noRecords')}</p>
       ) : (
         <div className="space-y-1">
           {scores.map((score, index) => (

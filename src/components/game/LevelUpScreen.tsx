@@ -1,5 +1,6 @@
 import React from 'react';
 import { Upgrade } from '@/types/game';
+import { useI18n } from '@/hooks/useI18n';
 
 interface LevelUpScreenProps {
   upgrades: Upgrade[];
@@ -12,15 +13,17 @@ export const LevelUpScreen: React.FC<LevelUpScreenProps> = ({
   onSelectUpgrade,
   level,
 }) => {
+  const { t } = useI18n();
+
   return (
     <div className="level-up-overlay animate-fade-in">
       <div className="text-center">
         <h2 className="text-4xl font-bold text-primary mb-2 title-glow font-pixel">
-          LEVEL UP!
+          {t('levelUp')}
         </h2>
-        <p className="text-xl text-accent mb-8">Level {level}</p>
+        <p className="text-xl text-accent mb-8">{t('level')} {level}</p>
         
-        <p className="text-muted-foreground mb-6">업그레이드를 선택하세요</p>
+        <p className="text-muted-foreground mb-6">{t('selectUpgrade')}</p>
         
         <div className="flex gap-4 justify-center">
           {upgrades.map((upgrade) => (
