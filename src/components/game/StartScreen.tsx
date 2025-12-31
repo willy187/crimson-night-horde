@@ -26,7 +26,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
       <div className="text-center animate-float">
         <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-2 sm:mb-4 title-glow font-pixel text-center md:text-5xl">NIGHT
-
 SURVIVAL</h1>
         <p className="text-base sm:text-xl text-muted-foreground mb-6 sm:mb-12">
           끝없는 적들로부터 살아남아라
