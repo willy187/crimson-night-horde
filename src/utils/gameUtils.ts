@@ -1,4 +1,4 @@
-import { Enemy, Player, Projectile, XpGem, Upgrade, Weapon } from '@/types/game';
+import { Enemy, Player, Projectile, XpGem, Upgrade, Weapon, Orbital } from '@/types/game';
 
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -112,15 +112,31 @@ export const createXpGem = (x: number, y: number, value: number): XpGem => ({
   value,
 });
 
+export const createOrbital = (existingOrbitals: Orbital[]): Orbital => {
+  const baseAngle = existingOrbitals.length > 0 
+    ? (2 * Math.PI / (existingOrbitals.length + 1)) 
+    : 0;
+  
+  return {
+    id: generateId(),
+    angle: existingOrbitals.length * baseAngle,
+    damage: 15,
+    size: 15,
+    orbitRadius: 80,
+    rotationSpeed: 2,
+  };
+};
+
 export const getUpgrades = (): Upgrade[] => [
   {
     id: 'damage',
     name: '공격력 증가',
     description: '공격력 +20%',
     icon: '⚔️',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player,
       weapon: { ...weapon, damage: weapon.damage * 1.2 },
+      orbitals,
     }),
   },
   {
@@ -128,9 +144,10 @@ export const getUpgrades = (): Upgrade[] => [
     name: '이동속도 증가',
     description: '이동속도 +15%',
     icon: '👟',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player: { ...player, speed: player.speed * 1.15 },
       weapon,
+      orbitals,
     }),
   },
   {
@@ -138,9 +155,10 @@ export const getUpgrades = (): Upgrade[] => [
     name: '공격속도 증가',
     description: '공격속도 +20%',
     icon: '⚡',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player,
       weapon: { ...weapon, fireRate: weapon.fireRate * 0.8 },
+      orbitals,
     }),
   },
   {
@@ -148,9 +166,10 @@ export const getUpgrades = (): Upgrade[] => [
     name: '투사체 추가',
     description: '투사체 +1',
     icon: '🔮',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player,
       weapon: { ...weapon, projectileCount: weapon.projectileCount + 1 },
+      orbitals,
     }),
   },
   {
@@ -158,13 +177,14 @@ export const getUpgrades = (): Upgrade[] => [
     name: '최대 체력 증가',
     description: '최대 체력 +25',
     icon: '❤️',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player: { 
         ...player, 
         maxHealth: player.maxHealth + 25,
         health: player.health + 25,
       },
       weapon,
+      orbitals,
     }),
   },
   {
@@ -172,12 +192,13 @@ export const getUpgrades = (): Upgrade[] => [
     name: '체력 회복',
     description: '체력 30% 회복',
     icon: '💚',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player: { 
         ...player, 
         health: Math.min(player.maxHealth, player.health + player.maxHealth * 0.3),
       },
       weapon,
+      orbitals,
     }),
   },
   {
@@ -185,9 +206,10 @@ export const getUpgrades = (): Upgrade[] => [
     name: '공격 범위 증가',
     description: '투사체 크기 +25%',
     icon: '💥',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player,
       weapon: { ...weapon, area: weapon.area * 1.25 },
+      orbitals,
     }),
   },
   {
@@ -195,9 +217,43 @@ export const getUpgrades = (): Upgrade[] => [
     name: '관통력 증가',
     description: '관통 +1',
     icon: '🎯',
-    apply: (player, weapon) => ({
+    apply: (player, weapon, orbitals) => ({
       player,
       weapon: { ...weapon, piercing: weapon.piercing + 1 },
+      orbitals,
+    }),
+  },
+  {
+    id: 'orbital',
+    name: '오비탈 추가',
+    description: '회전하는 구체 +1',
+    icon: '🛸',
+    apply: (player, weapon, orbitals) => ({
+      player,
+      weapon,
+      orbitals: [...orbitals, createOrbital(orbitals)],
+    }),
+  },
+  {
+    id: 'orbital_damage',
+    name: '오비탈 강화',
+    description: '오비탈 공격력 +50%',
+    icon: '💫',
+    apply: (player, weapon, orbitals) => ({
+      player,
+      weapon,
+      orbitals: orbitals.map(o => ({ ...o, damage: o.damage * 1.5 })),
+    }),
+  },
+  {
+    id: 'orbital_size',
+    name: '오비탈 확대',
+    description: '오비탈 크기 +30%',
+    icon: '🌟',
+    apply: (player, weapon, orbitals) => ({
+      player,
+      weapon,
+      orbitals: orbitals.map(o => ({ ...o, size: o.size * 1.3 })),
     }),
   },
 ];

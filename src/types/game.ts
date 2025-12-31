@@ -55,12 +55,21 @@ export interface Weapon {
   area: number;
 }
 
+export interface Orbital {
+  id: string;
+  angle: number;
+  damage: number;
+  size: number;
+  orbitRadius: number;
+  rotationSpeed: number;
+}
+
 export interface Upgrade {
   id: string;
   name: string;
   description: string;
   icon: string;
-  apply: (player: Player, weapon: Weapon) => { player: Player; weapon: Weapon };
+  apply: (player: Player, weapon: Weapon, orbitals: Orbital[]) => { player: Player; weapon: Weapon; orbitals: Orbital[] };
 }
 
 export interface Explosion {
@@ -79,6 +88,7 @@ export interface GameState {
   projectiles: Projectile[];
   xpGems: XpGem[];
   explosions: Explosion[];
+  orbitals: Orbital[];
   weapon: Weapon;
   gameTime: number;
   kills: number;

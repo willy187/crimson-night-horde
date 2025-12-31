@@ -166,6 +166,56 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.restore();
     });
 
+    // Draw orbitals
+    gameState.orbitals.forEach((orbital) => {
+      const orbX = gameState.player.x + Math.cos(orbital.angle) * orbital.orbitRadius;
+      const orbY = gameState.player.y + Math.sin(orbital.angle) * orbital.orbitRadius;
+      
+      ctx.save();
+      
+      // Glow effect
+      ctx.shadowColor = 'hsl(50, 100%, 60%)';
+      ctx.shadowBlur = 20;
+      
+      // Outer glow ring
+      const gradient = ctx.createRadialGradient(
+        orbX, orbY, 0,
+        orbX, orbY, orbital.size
+      );
+      gradient.addColorStop(0, 'hsl(50, 100%, 90%)');
+      gradient.addColorStop(0.4, 'hsl(40, 100%, 60%)');
+      gradient.addColorStop(0.8, 'hsl(30, 100%, 50%)');
+      gradient.addColorStop(1, 'hsla(20, 100%, 40%, 0.5)');
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(orbX, orbY, orbital.size, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Inner bright core
+      ctx.fillStyle = 'hsl(50, 100%, 95%)';
+      ctx.beginPath();
+      ctx.arc(orbX, orbY, orbital.size * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Trail effect
+      const trailLength = 5;
+      for (let i = 1; i <= trailLength; i++) {
+        const trailAngle = orbital.angle - (i * 0.15);
+        const trailX = gameState.player.x + Math.cos(trailAngle) * orbital.orbitRadius;
+        const trailY = gameState.player.y + Math.sin(trailAngle) * orbital.orbitRadius;
+        const alpha = 0.3 - (i * 0.05);
+        const trailSize = orbital.size * (1 - i * 0.1);
+        
+        ctx.fillStyle = `hsla(40, 100%, 60%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(trailX, trailY, trailSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    });
+
     // Draw player
     const { player } = gameState;
     ctx.save();
