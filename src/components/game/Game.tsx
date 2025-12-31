@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion } from '@/types/game';
+import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion, Orbital } from '@/types/game';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTouchJoystick } from '@/hooks/useTouchJoystick';
@@ -60,6 +60,7 @@ export const Game: React.FC = () => {
     projectiles: [],
     xpGems: [],
     explosions: [],
+    orbitals: [],
     weapon: { ...initialWeapon },
     gameTime: 0,
     kills: 0,
@@ -94,6 +95,7 @@ export const Game: React.FC = () => {
       projectiles: [],
       xpGems: [],
       explosions: [],
+      orbitals: [],
       weapon: { ...initialWeapon },
       gameTime: 0,
       kills: 0,
@@ -159,11 +161,12 @@ export const Game: React.FC = () => {
 
   const handleSelectUpgrade = useCallback((upgrade: Upgrade) => {
     setGameState((prev) => {
-      const { player, weapon } = upgrade.apply(prev.player, prev.weapon);
+      const { player, weapon, orbitals } = upgrade.apply(prev.player, prev.weapon, prev.orbitals);
       return {
         ...prev,
         player,
         weapon,
+        orbitals,
         isLevelingUp: false,
         isPaused: false,
         availableUpgrades: [],
@@ -176,7 +179,7 @@ export const Game: React.FC = () => {
       setGameState((prev) => {
         if (prev.isGameOver || prev.isPaused || prev.isLevelingUp) return prev;
 
-        let { player, enemies, projectiles, xpGems, explosions, weapon, gameTime, kills } = prev;
+        let { player, enemies, projectiles, xpGems, explosions, orbitals, weapon, gameTime, kills } = prev;
 
         // Update game time
         gameTime += deltaTime;
@@ -255,6 +258,12 @@ export const Game: React.FC = () => {
               proj.y < CANVAS_HEIGHT + 50
           );
 
+        // Update orbitals rotation
+        orbitals = orbitals.map((orbital) => ({
+          ...orbital,
+          angle: orbital.angle + orbital.rotationSpeed * deltaTime,
+        }));
+
         // Move enemies toward player
         enemies = enemies.map((enemy) => {
           const dir = normalize(player.x - enemy.x, player.y - enemy.y);
@@ -271,6 +280,7 @@ export const Game: React.FC = () => {
         let projectilesToRemove: Set<string> = new Set();
         
         enemies = enemies.filter((enemy) => {
+          // Check projectile collisions
           for (const proj of projectiles) {
             if (proj.hitEnemies.has(enemy.id)) continue;
             
@@ -287,7 +297,6 @@ export const Game: React.FC = () => {
                 kills++;
                 pendingSoundsRef.current.explosions++;
                 newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
-                // Add explosion effect
                 const explosionColor = enemy.type === 'fast' ? 'hsl(30, 100%, 50%)' : 
                                        enemy.type === 'tank' ? 'hsl(0, 60%, 50%)' : 'hsl(0, 72%, 51%)';
                 newExplosions.push({
@@ -303,6 +312,36 @@ export const Game: React.FC = () => {
               }
             }
           }
+
+          // Check orbital collisions
+          for (const orbital of orbitals) {
+            const orbX = player.x + Math.cos(orbital.angle) * orbital.orbitRadius;
+            const orbY = player.y + Math.sin(orbital.angle) * orbital.orbitRadius;
+            const dist = distance(orbX, orbY, enemy.x, enemy.y);
+            
+            if (dist < orbital.size + enemy.size) {
+              enemy.health -= orbital.damage * deltaTime * 10; // Continuous damage
+              
+              if (enemy.health <= 0) {
+                kills++;
+                pendingSoundsRef.current.explosions++;
+                newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
+                const explosionColor = enemy.type === 'fast' ? 'hsl(30, 100%, 50%)' : 
+                                       enemy.type === 'tank' ? 'hsl(0, 60%, 50%)' : 'hsl(0, 72%, 51%)';
+                newExplosions.push({
+                  id: `exp-${Date.now()}-${Math.random()}`,
+                  x: enemy.x,
+                  y: enemy.y,
+                  startTime: gameTime,
+                  duration: 0.3,
+                  size: enemy.size * 2,
+                  color: explosionColor,
+                });
+                return false;
+              }
+            }
+          }
+
           return true;
         });
 
@@ -362,6 +401,7 @@ export const Game: React.FC = () => {
           projectiles,
           xpGems,
           explosions,
+          orbitals,
           gameTime,
           kills,
           isGameOver,
