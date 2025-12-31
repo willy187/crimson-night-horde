@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/hooks/useI18n';
 
 interface InitialInputScreenProps {
   rank: number;
@@ -16,6 +17,7 @@ export const InitialInputScreen: React.FC<InitialInputScreenProps> = ({
   onSkip,
 }) => {
   const [initials, setInitials] = useState('');
+  const { t } = useI18n();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,11 +34,13 @@ export const InitialInputScreen: React.FC<InitialInputScreenProps> = ({
   return (
     <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 animate-fade-in">
       <div className="bg-card rounded-xl p-8 border border-primary/50 text-center max-w-md">
-        <h2 className="text-3xl font-bold text-primary mb-2">🏆 TOP 10 진입!</h2>
-        <p className="text-xl text-accent mb-4">{rank}위 - {score.toLocaleString()}점</p>
+        <h2 className="text-3xl font-bold text-primary mb-2">{t('topTenEntry')}</h2>
+        <p className="text-xl text-accent mb-4">
+          {t('rankScore', { rank, score: score.toLocaleString() })}
+        </p>
         
         <p className="text-muted-foreground mb-6">
-          이니셜을 입력하세요 (최대 5자)
+          {t('enterInitials')}
         </p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,7 +60,7 @@ export const InitialInputScreen: React.FC<InitialInputScreenProps> = ({
               disabled={initials.trim().length === 0}
               className="px-8 py-3 text-lg"
             >
-              등록
+              {t('register')}
             </Button>
             <Button
               type="button"
@@ -64,7 +68,7 @@ export const InitialInputScreen: React.FC<InitialInputScreenProps> = ({
               onClick={onSkip}
               className="px-8 py-3 text-lg"
             >
-              건너뛰기
+              {t('skip')}
             </Button>
           </div>
         </form>
