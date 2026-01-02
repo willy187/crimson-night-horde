@@ -77,7 +77,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </div>
             <div className="flex gap-4 sm:gap-8 justify-center flex-wrap mt-3">
               <div className="flex items-center gap-2">
-                <kbd className="px-2 sm:px-3 py-1 bg-muted rounded text-xs sm:text-sm">Space</kbd>
+                <kbd className="px-2 sm:px-3 py-1 bg-muted rounded text-xs sm:text-sm">ESC</kbd>
                 <span className="text-sm">{t('pause')}</span>
               </div>
               <div className="flex items-center gap-2">

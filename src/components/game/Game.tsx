@@ -23,6 +23,7 @@ import { VirtualJoystick } from './VirtualJoystick';
 import { InitialInputScreen } from './InitialInputScreen';
 import { Leaderboard, checkTopTen, submitHighScore } from './Leaderboard';
 import { RotateDeviceOverlay } from './RotateDeviceOverlay';
+import { PauseScreen } from './PauseScreen';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1920;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 1080;
@@ -326,16 +327,16 @@ export const Game: React.FC = () => {
                 kills++;
                 pendingSoundsRef.current.explosions++;
                 newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
-                const explosionColor = enemy.type === 'fast' ? 'hsl(30, 100%, 50%)' : 
-                                       enemy.type === 'tank' ? 'hsl(0, 60%, 50%)' : 'hsl(0, 72%, 51%)';
+                // Orbital explosion - purple spiral effect
                 newExplosions.push({
-                  id: `exp-${Date.now()}-${Math.random()}`,
+                  id: `exp-orbital-${Date.now()}-${Math.random()}`,
                   x: enemy.x,
                   y: enemy.y,
                   startTime: gameTime,
-                  duration: 0.3,
-                  size: enemy.size * 2,
-                  color: explosionColor,
+                  duration: 0.5,
+                  size: enemy.size * 3,
+                  color: 'hsl(280, 100%, 60%)',
+                  isOrbital: true,
                 });
                 return false;
               }
@@ -487,12 +488,7 @@ export const Game: React.FC = () => {
       />
 
       {gameState.isPaused && !gameState.isLevelingUp && !gameState.isGameOver && (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">일시정지</h2>
-            <p className="text-lg text-gray-300">스페이스바를 눌러 계속하기</p>
-          </div>
-        </div>
+        <PauseScreen />
       )}
 
       <GameHUD

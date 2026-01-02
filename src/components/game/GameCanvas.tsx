@@ -127,40 +127,107 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       const alpha = 1 - progress;
       const currentSize = explosion.size * (0.5 + progress * 1.5);
       
-      // Outer ring
-      ctx.strokeStyle = explosion.color.replace(')', `, ${alpha * 0.8})`).replace('hsl', 'hsla');
-      ctx.lineWidth = 3 * (1 - progress);
-      ctx.beginPath();
-      ctx.arc(explosion.x, explosion.y, currentSize, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // Inner flash
-      const innerGradient = ctx.createRadialGradient(
-        explosion.x, explosion.y, 0,
-        explosion.x, explosion.y, currentSize * 0.6
-      );
-      innerGradient.addColorStop(0, `hsla(45, 100%, 80%, ${alpha * 0.8})`);
-      innerGradient.addColorStop(0.5, explosion.color.replace(')', `, ${alpha * 0.5})`).replace('hsl', 'hsla'));
-      innerGradient.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
-      
-      ctx.fillStyle = innerGradient;
-      ctx.beginPath();
-      ctx.arc(explosion.x, explosion.y, currentSize * 0.6, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Particles
-      const particleCount = 6;
-      for (let i = 0; i < particleCount; i++) {
-        const angle = (i / particleCount) * Math.PI * 2;
-        const particleDist = currentSize * (0.8 + progress * 0.5);
-        const px = explosion.x + Math.cos(angle) * particleDist;
-        const py = explosion.y + Math.sin(angle) * particleDist;
-        const particleSize = 4 * (1 - progress);
+      if (explosion.isOrbital) {
+        // Orbital explosion - purple spiral effect
+        const rotationOffset = progress * Math.PI * 4; // Spiral rotation
         
-        ctx.fillStyle = `hsla(45, 100%, 70%, ${alpha})`;
+        // Outer expanding ring
+        ctx.strokeStyle = `hsla(280, 100%, 60%, ${alpha * 0.8})`;
+        ctx.lineWidth = 4 * (1 - progress);
         ctx.beginPath();
-        ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+        ctx.arc(explosion.x, explosion.y, currentSize, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner ring
+        ctx.strokeStyle = `hsla(200, 100%, 60%, ${alpha * 0.6})`;
+        ctx.lineWidth = 2 * (1 - progress);
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, currentSize * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Central flash gradient
+        const innerGradient = ctx.createRadialGradient(
+          explosion.x, explosion.y, 0,
+          explosion.x, explosion.y, currentSize * 0.5
+        );
+        innerGradient.addColorStop(0, `hsla(280, 100%, 90%, ${alpha})`);
+        innerGradient.addColorStop(0.4, `hsla(280, 100%, 70%, ${alpha * 0.6})`);
+        innerGradient.addColorStop(1, 'hsla(280, 100%, 50%, 0)');
+        
+        ctx.fillStyle = innerGradient;
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, currentSize * 0.5, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Spiral particles
+        const particleCount = 10;
+        for (let i = 0; i < particleCount; i++) {
+          const baseAngle = (i / particleCount) * Math.PI * 2;
+          const spiralAngle = baseAngle + rotationOffset;
+          const particleDist = currentSize * (0.3 + progress * 0.8);
+          const px = explosion.x + Math.cos(spiralAngle) * particleDist;
+          const py = explosion.y + Math.sin(spiralAngle) * particleDist;
+          const particleSize = 5 * (1 - progress);
+          
+          // Alternating purple and cyan particles
+          const hue = i % 2 === 0 ? 280 : 200;
+          ctx.fillStyle = `hsla(${hue}, 100%, 70%, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Additional outer spiral particles
+        for (let i = 0; i < 6; i++) {
+          const baseAngle = (i / 6) * Math.PI * 2;
+          const spiralAngle = baseAngle - rotationOffset * 0.5; // Counter-rotate
+          const particleDist = currentSize * (0.8 + progress * 0.4);
+          const px = explosion.x + Math.cos(spiralAngle) * particleDist;
+          const py = explosion.y + Math.sin(spiralAngle) * particleDist;
+          const particleSize = 3 * (1 - progress);
+          
+          ctx.fillStyle = `hsla(50, 100%, 70%, ${alpha * 0.8})`;
+          ctx.beginPath();
+          ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        // Normal explosion
+        // Outer ring
+        ctx.strokeStyle = explosion.color.replace(')', `, ${alpha * 0.8})`).replace('hsl', 'hsla');
+        ctx.lineWidth = 3 * (1 - progress);
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, currentSize, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner flash
+        const innerGradient = ctx.createRadialGradient(
+          explosion.x, explosion.y, 0,
+          explosion.x, explosion.y, currentSize * 0.6
+        );
+        innerGradient.addColorStop(0, `hsla(45, 100%, 80%, ${alpha * 0.8})`);
+        innerGradient.addColorStop(0.5, explosion.color.replace(')', `, ${alpha * 0.5})`).replace('hsl', 'hsla'));
+        innerGradient.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
+        
+        ctx.fillStyle = innerGradient;
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, currentSize * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Particles
+        const particleCount = 6;
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2;
+          const particleDist = currentSize * (0.8 + progress * 0.5);
+          const px = explosion.x + Math.cos(angle) * particleDist;
+          const py = explosion.y + Math.sin(angle) * particleDist;
+          const particleSize = 4 * (1 - progress);
+          
+          ctx.fillStyle = `hsla(45, 100%, 70%, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
       
       ctx.restore();
