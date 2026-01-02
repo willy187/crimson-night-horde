@@ -38,7 +38,7 @@ export const useKeyboard = (onPause?: () => void, onMute?: () => void) => {
         case 'arrowright':
           keys.current.right = true;
           break;
-        case ' ':
+        case 'escape':
           e.preventDefault();
           onPause?.();
           break;

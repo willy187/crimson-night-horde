@@ -80,6 +80,7 @@ export interface Explosion {
   duration: number;
   size: number;
   color: string;
+  isOrbital?: boolean;
 }
 
 export interface GameState {
