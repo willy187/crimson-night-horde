@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/hooks/useI18n';
+import { GameTheme } from '@/types/game';
+import { Cat, Rocket } from 'lucide-react';
 
 interface HighScore {
   id: string;
@@ -9,15 +11,18 @@ interface HighScore {
   survival_time: number;
   kills: number;
   level: number;
+  theme: string;
 }
 
 interface LeaderboardProps {
   currentScore?: number;
+  showUserRank?: boolean;
 }
 
-export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
+export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore, showUserRank = false }) => {
   const [scores, setScores] = useState<HighScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRank, setUserRank] = useState<number | null>(null);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -44,6 +49,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
     };
   }, []);
 
+  // Check user rank when currentScore changes
+  useEffect(() => {
+    if (showUserRank && currentScore !== undefined) {
+      checkUserRank(currentScore);
+    }
+  }, [currentScore, showUserRank]);
+
   const fetchScores = async () => {
     const { data, error } = await supabase
       .from('high_scores')
@@ -57,10 +69,33 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
     setLoading(false);
   };
 
+  const checkUserRank = async (score: number) => {
+    const { data, error } = await supabase
+      .from('high_scores')
+      .select('score')
+      .gt('score', score);
+    
+    if (!error && data) {
+      const rank = data.length + 1;
+      if (rank > 10) {
+        setUserRank(rank);
+      } else {
+        setUserRank(null);
+      }
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const ThemeIcon = ({ theme }: { theme: string }) => {
+    if (theme === 'cat') {
+      return <Cat className="w-4 h-4 text-amber-500" />;
+    }
+    return <Rocket className="w-4 h-4 text-cyan-500" />;
   };
 
   if (loading) {
@@ -97,6 +132,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
                   {index + 1}.
                 </span>
                 <span className="font-mono font-bold text-foreground">{score.initials}</span>
+                <ThemeIcon theme={score.theme || 'space'} />
               </div>
               <div className="flex items-center gap-3 text-muted-foreground">
                 <span className="text-primary font-bold">{score.score.toLocaleString()}</span>
@@ -104,6 +140,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      
+      {/* Show user rank if outside top 10 */}
+      {showUserRank && userRank && userRank > 10 && (
+        <div className="mt-4 pt-3 border-t border-border text-center">
+          <span className="text-muted-foreground">
+            {t('yourRank')}: <span className="text-primary font-bold">{userRank}{t('rank')}</span>
+          </span>
         </div>
       )}
     </div>
@@ -144,7 +189,8 @@ export const submitHighScore = async (
   score: number,
   survivalTime: number,
   kills: number,
-  level: number
+  level: number,
+  theme: GameTheme = 'space'
 ): Promise<boolean> => {
   const { error } = await supabase.from('high_scores').insert({
     initials: initials.toUpperCase().slice(0, 5),
@@ -152,6 +198,7 @@ export const submitHighScore = async (
     survival_time: Math.floor(survivalTime),
     kills,
     level,
+    theme,
   });
 
   return !error;

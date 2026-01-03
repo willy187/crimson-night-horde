@@ -54,7 +54,7 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
       </div>
 
       <div className="mb-8 w-80">
-        <Leaderboard currentScore={score} />
+        <Leaderboard currentScore={score} showUserRank={true} />
       </div>
       
       <Button

@@ -80,6 +80,7 @@ export const createEnemy = (
     damage,
     size,
     type,
+    rotation: Math.atan2(playerY - y, playerX - x),
   };
 };
 

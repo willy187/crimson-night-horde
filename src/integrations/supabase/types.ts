@@ -23,6 +23,7 @@ export type Database = {
           level: number
           score: number
           survival_time: number
+          theme: string
         }
         Insert: {
           created_at?: string
@@ -32,6 +33,7 @@ export type Database = {
           level: number
           score: number
           survival_time: number
+          theme?: string
         }
         Update: {
           created_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           level?: number
           score?: number
           survival_time?: number
+          theme?: string
         }
         Relationships: []
       }
