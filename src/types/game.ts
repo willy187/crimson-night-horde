@@ -1,3 +1,5 @@
+export type GameTheme = 'cat' | 'space';
+
 export interface Position {
   x: number;
   y: number;
@@ -12,6 +14,7 @@ export interface Player {
   level: number;
   xp: number;
   xpToNextLevel: number;
+  rotation: number;
 }
 
 export interface Enemy {
@@ -24,6 +27,7 @@ export interface Enemy {
   damage: number;
   size: number;
   type: 'basic' | 'fast' | 'tank';
+  rotation: number;
 }
 
 export interface Projectile {
@@ -97,4 +101,5 @@ export interface GameState {
   isPaused: boolean;
   isLevelingUp: boolean;
   availableUpgrades: Upgrade[];
+  theme: GameTheme;
 }

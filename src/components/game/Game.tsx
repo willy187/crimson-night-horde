@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion, Orbital } from '@/types/game';
+import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion, Orbital, GameTheme } from '@/types/game';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTouchJoystick } from '@/hooks/useTouchJoystick';
@@ -24,6 +24,7 @@ import { InitialInputScreen } from './InitialInputScreen';
 import { Leaderboard, checkTopTen, submitHighScore } from './Leaderboard';
 import { RotateDeviceOverlay } from './RotateDeviceOverlay';
 import { PauseScreen } from './PauseScreen';
+import { ThemeSelectScreen } from './ThemeSelectScreen';
 
 const CANVAS_WIDTH = typeof window !== 'undefined' ? window.innerWidth : 1920;
 const CANVAS_HEIGHT = typeof window !== 'undefined' ? window.innerHeight : 1080;
@@ -37,6 +38,7 @@ const initialPlayer: Player = {
   level: 1,
   xp: 0,
   xpToNextLevel: 10,
+  rotation: 0,
 };
 
 const initialWeapon: Weapon = {
@@ -49,27 +51,32 @@ const initialWeapon: Weapon = {
   area: 1,
 };
 
+const createInitialGameState = (theme: GameTheme): GameState => ({
+  player: { ...initialPlayer, x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
+  enemies: [],
+  projectiles: [],
+  xpGems: [],
+  explosions: [],
+  orbitals: [],
+  weapon: { ...initialWeapon },
+  gameTime: 0,
+  kills: 0,
+  isGameOver: false,
+  isPaused: false,
+  isLevelingUp: false,
+  availableUpgrades: [],
+  theme,
+});
+
 export const Game: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
+  const [showThemeSelect, setShowThemeSelect] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<GameTheme>('space');
   const [showInitialInput, setShowInitialInput] = useState(false);
   const [hasCheckedTopTen, setHasCheckedTopTen] = useState(false);
   const [topTenRank, setTopTenRank] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
-  const [gameState, setGameState] = useState<GameState>({
-    player: { ...initialPlayer },
-    enemies: [],
-    projectiles: [],
-    xpGems: [],
-    explosions: [],
-    orbitals: [],
-    weapon: { ...initialWeapon },
-    gameTime: 0,
-    kills: 0,
-    isGameOver: false,
-    isPaused: false,
-    isLevelingUp: false,
-    availableUpgrades: [],
-  });
+  const [gameState, setGameState] = useState<GameState>(createInitialGameState('space'));
 
   const { isMuted, playShoot, playExplosion, playLevelUp, playGameOver, startBgm, stopBgm, toggleMute } = useSoundManager();
   const gameOverSoundPlayed = useRef(false);
@@ -89,29 +96,21 @@ export const Game: React.FC = () => {
   const lastSpawnTime = useRef(0);
   const pendingSoundsRef = useRef<{ shoots: number; explosions: number; levelUp: boolean }>({ shoots: 0, explosions: 0, levelUp: false });
 
-  const resetGame = useCallback(() => {
-    setGameState({
-      player: { ...initialPlayer, x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
-      enemies: [],
-      projectiles: [],
-      xpGems: [],
-      explosions: [],
-      orbitals: [],
-      weapon: { ...initialWeapon },
-      gameTime: 0,
-      kills: 0,
-      isGameOver: false,
-      isPaused: false,
-      isLevelingUp: false,
-      availableUpgrades: [],
-    });
+  const resetGame = useCallback((theme: GameTheme) => {
+    setGameState(createInitialGameState(theme));
     lastFireTime.current = 0;
     lastSpawnTime.current = 0;
     gameOverSoundPlayed.current = false;
   }, []);
 
   const handleStart = useCallback(() => {
-    resetGame();
+    setShowThemeSelect(true);
+  }, []);
+
+  const handleSelectTheme = useCallback((theme: GameTheme) => {
+    setSelectedTheme(theme);
+    setShowThemeSelect(false);
+    resetGame(theme);
     setGameStarted(true);
     startBgm();
   }, [resetGame, startBgm]);
@@ -121,8 +120,9 @@ export const Game: React.FC = () => {
     setHasCheckedTopTen(false);
     setTopTenRank(0);
     setFinalScore(0);
-    resetGame();
-  }, [resetGame]);
+    setGameStarted(false);
+    setShowThemeSelect(true);
+  }, []);
 
   // Calculate score
   const calculateScore = useCallback((kills: number, gameTime: number, level: number) => {
@@ -151,10 +151,11 @@ export const Game: React.FC = () => {
       finalScore,
       gameState.gameTime,
       gameState.kills,
-      gameState.player.level
+      gameState.player.level,
+      selectedTheme
     );
     setShowInitialInput(false);
-  }, [finalScore, gameState.gameTime, gameState.kills, gameState.player.level]);
+  }, [finalScore, gameState.gameTime, gameState.kills, gameState.player.level, selectedTheme]);
 
   const handleSkipInitials = useCallback(() => {
     setShowInitialInput(false);
@@ -180,7 +181,7 @@ export const Game: React.FC = () => {
       setGameState((prev) => {
         if (prev.isGameOver || prev.isPaused || prev.isLevelingUp) return prev;
 
-        let { player, enemies, projectiles, xpGems, explosions, orbitals, weapon, gameTime, kills } = prev;
+        let { player, enemies, projectiles, xpGems, explosions, orbitals, weapon, gameTime, kills, theme } = prev;
 
         // Update game time
         gameTime += deltaTime;
@@ -195,10 +196,12 @@ export const Game: React.FC = () => {
 
         if (dx !== 0 || dy !== 0) {
           const normalized = normalize(dx, dy);
+          const newRotation = Math.atan2(dy, dx);
           player = {
             ...player,
             x: Math.max(20, Math.min(CANVAS_WIDTH - 20, player.x + normalized.x * player.speed * deltaTime)),
             y: Math.max(20, Math.min(CANVAS_HEIGHT - 20, player.y + normalized.y * player.speed * deltaTime)),
+            rotation: newRotation,
           };
         }
 
@@ -265,13 +268,15 @@ export const Game: React.FC = () => {
           angle: orbital.angle + orbital.rotationSpeed * deltaTime,
         }));
 
-        // Move enemies toward player
+        // Move enemies toward player and update their rotation
         enemies = enemies.map((enemy) => {
           const dir = normalize(player.x - enemy.x, player.y - enemy.y);
+          const newRotation = Math.atan2(player.y - enemy.y, player.x - enemy.x);
           return {
             ...enemy,
             x: enemy.x + dir.x * enemy.speed * deltaTime,
             y: enemy.y + dir.y * enemy.speed * deltaTime,
+            rotation: newRotation,
           };
         });
 
@@ -409,6 +414,7 @@ export const Game: React.FC = () => {
           isLevelingUp,
           isPaused: isLevelingUp,
           availableUpgrades,
+          theme,
         };
       });
     },
@@ -457,6 +463,15 @@ export const Game: React.FC = () => {
   // Show rotate overlay if mobile and not in landscape
   if (needsRotation) {
     return <RotateDeviceOverlay />;
+  }
+
+  // Theme selection screen
+  if (showThemeSelect) {
+    return (
+      <div className="game-container">
+        <ThemeSelectScreen onSelectTheme={handleSelectTheme} />
+      </div>
+    );
   }
 
   if (!gameStarted) {

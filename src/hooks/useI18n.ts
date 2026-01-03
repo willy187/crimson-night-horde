@@ -68,6 +68,17 @@ const translations = {
     guideTip: '팁',
     guideTipDesc: 'XP 젬을 모아 레벨업하세요. 레벨업 시 업그레이드를 선택할 수 있습니다!',
     pressToContinue: 'ESC를 눌러 계속하기',
+    
+    // Theme Selection
+    selectTheme: '테마를 선택하세요',
+    catTheme: '고양이 vs 쥐',
+    catThemeDesc: '귀여운 고양이가 쥐들로부터 도망쳐요!',
+    spaceTheme: '우주 전쟁',
+    spaceThemeDesc: '외계인들로부터 우주선을 지켜라!',
+    
+    // Rank Display
+    yourRank: '당신의 순위',
+    rank: '위',
   },
   en: {
     subtitle: 'Survive the endless horde',
@@ -126,6 +137,17 @@ const translations = {
     guideTip: 'Tip',
     guideTipDesc: 'Collect XP gems to level up. Choose an upgrade each time you level up!',
     pressToContinue: 'Press ESC to continue',
+    
+    // Theme Selection
+    selectTheme: 'Select Theme',
+    catTheme: 'Cat vs Mice',
+    catThemeDesc: 'A cute cat escaping from mice!',
+    spaceTheme: 'Space War',
+    spaceThemeDesc: 'Defend your spaceship from aliens!',
+    
+    // Rank Display
+    yourRank: 'Your Rank',
+    rank: '',
   },
   ja: {
     subtitle: '終わりなき敵から生き延びろ',
@@ -184,6 +206,17 @@ const translations = {
     guideTip: 'ヒント',
     guideTipDesc: 'XPジェムを集めてレベルアップ。レベルアップ時にアップグレードを選択できます！',
     pressToContinue: 'ESCで続行',
+    
+    // Theme Selection
+    selectTheme: 'テーマを選択',
+    catTheme: '猫 vs ネズミ',
+    catThemeDesc: 'かわいい猫がネズミから逃げる！',
+    spaceTheme: '宇宙戦争',
+    spaceThemeDesc: 'エイリアンから宇宙船を守れ！',
+    
+    // Rank Display
+    yourRank: 'あなたの順位',
+    rank: '位',
   },
   zh: {
     subtitle: '在无尽的敌群中生存下来',
@@ -242,6 +275,17 @@ const translations = {
     guideTip: '提示',
     guideTipDesc: '收集经验宝石来升级。每次升级时可以选择一个强化！',
     pressToContinue: '按ESC继续',
+    
+    // Theme Selection
+    selectTheme: '选择主题',
+    catTheme: '猫 vs 老鼠',
+    catThemeDesc: '可爱的猫咪逃离老鼠！',
+    spaceTheme: '太空战争',
+    spaceThemeDesc: '保护你的飞船免受外星人侵袭！',
+    
+    // Rank Display
+    yourRank: '你的排名',
+    rank: '',
   },
 };
 
