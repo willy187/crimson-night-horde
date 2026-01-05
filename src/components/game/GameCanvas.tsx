@@ -81,7 +81,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Draw projectiles with theme
     gameState.projectiles.forEach((proj) => {
-      drawThemedProjectile(ctx, proj.x, proj.y, proj.size, theme);
+      const angle = Math.atan2(proj.vy, proj.vx);
+      drawThemedProjectile(ctx, proj.x, proj.y, proj.size, theme, angle);
     });
 
     // Draw enemies with theme

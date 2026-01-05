@@ -350,37 +350,74 @@ export const drawThemedProjectile = (
   x: number,
   y: number,
   size: number,
-  theme: GameTheme
+  theme: GameTheme,
+  angle: number = 0
 ) => {
   ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
   
   if (theme === 'cat') {
-    // Fish bone / yarn ball projectile
-    ctx.shadowColor = 'hsl(45, 100%, 60%)';
-    ctx.shadowBlur = 10;
+    // Cat paw print projectile
+    ctx.shadowColor = 'hsl(35, 80%, 60%)';
+    ctx.shadowBlur = 12;
     
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-    gradient.addColorStop(0, 'hsl(45, 100%, 80%)');
-    gradient.addColorStop(0.5, 'hsl(30, 90%, 60%)');
-    gradient.addColorStop(1, 'hsl(20, 80%, 40%)');
-    
-    ctx.fillStyle = gradient;
+    // Main pad
+    ctx.fillStyle = 'hsl(350, 60%, 70%)';
     ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.ellipse(0, size * 0.2, size * 0.8, size * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Toe beans
+    ctx.fillStyle = 'hsl(350, 50%, 80%)';
+    const toePositions = [
+      { x: -size * 0.5, y: -size * 0.4 },
+      { x: 0, y: -size * 0.6 },
+      { x: size * 0.5, y: -size * 0.4 },
+    ];
+    toePositions.forEach(pos => {
+      ctx.beginPath();
+      ctx.ellipse(pos.x, pos.y, size * 0.35, size * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    // Glow effect
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'hsla(350, 80%, 90%, 0.5)';
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
     ctx.fill();
   } else {
-    // Laser / energy projectile
+    // Space laser beam projectile
     ctx.shadowColor = 'hsl(180, 100%, 60%)';
     ctx.shadowBlur = 15;
     
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-    gradient.addColorStop(0, 'hsl(180, 100%, 90%)');
-    gradient.addColorStop(0.5, 'hsl(200, 100%, 60%)');
-    gradient.addColorStop(1, 'hsl(220, 100%, 40%)');
+    // Elongated laser shape
+    const gradient = ctx.createLinearGradient(-size * 1.5, 0, size * 1.5, 0);
+    gradient.addColorStop(0, 'hsla(200, 100%, 70%, 0.3)');
+    gradient.addColorStop(0.3, 'hsl(180, 100%, 80%)');
+    gradient.addColorStop(0.5, 'hsl(180, 100%, 95%)');
+    gradient.addColorStop(0.7, 'hsl(180, 100%, 80%)');
+    gradient.addColorStop(1, 'hsla(200, 100%, 70%, 0.3)');
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, size * 1.5, size * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Core
+    ctx.fillStyle = 'hsl(180, 100%, 95%)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size * 0.8, size * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Trailing particles
+    ctx.fillStyle = 'hsla(200, 100%, 80%, 0.6)';
+    ctx.beginPath();
+    ctx.arc(-size * 1.2, 0, size * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-size * 1.6, 0, size * 0.1, 0, Math.PI * 2);
     ctx.fill();
   }
   

@@ -112,7 +112,7 @@ export const Game: React.FC = () => {
     setShowThemeSelect(false);
     resetGame(theme);
     setGameStarted(true);
-    startBgm();
+    startBgm(theme);
   }, [resetGame, startBgm]);
 
   const handleRestart = useCallback(() => {
@@ -425,11 +425,11 @@ export const Game: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (pendingSoundsRef.current.shoots > 0) {
-        playShoot();
+        playShoot(selectedTheme);
         pendingSoundsRef.current.shoots = 0;
       }
       if (pendingSoundsRef.current.explosions > 0) {
-        playExplosion();
+        playExplosion(selectedTheme);
         pendingSoundsRef.current.explosions = 0;
       }
       if (pendingSoundsRef.current.levelUp) {
@@ -438,7 +438,7 @@ export const Game: React.FC = () => {
       }
     }, 50);
     return () => clearInterval(interval);
-  }, [playShoot, playExplosion, playLevelUp]);
+  }, [playShoot, playExplosion, playLevelUp, selectedTheme]);
 
   // Game over sound and BGM stop
   useEffect(() => {
