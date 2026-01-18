@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion, Orbital, GameTheme } from '@/types/game';
+import { GameState, Player, Weapon, Enemy, Projectile, XpGem, Upgrade, Explosion, Orbital, GameTheme, PowerUp, ActivePowerUp } from '@/types/game';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useTouchJoystick } from '@/hooks/useTouchJoystick';
@@ -9,7 +9,8 @@ import { useSoundManager } from '@/hooks/useSoundManager';
 import { 
   createEnemy, 
   createProjectile, 
-  createXpGem, 
+  createXpGem,
+  createPowerUp,
   distance, 
   normalize,
   getRandomUpgrades,
@@ -54,6 +55,8 @@ const initialWeapon: Weapon = {
 const createInitialGameState = (theme: GameTheme): GameState => ({
   player: { ...initialPlayer, x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
   enemies: [],
+  powerUps: [],
+  activePowerUps: [],
   projectiles: [],
   xpGems: [],
   explosions: [],
@@ -181,7 +184,7 @@ export const Game: React.FC = () => {
       setGameState((prev) => {
         if (prev.isGameOver || prev.isPaused || prev.isLevelingUp) return prev;
 
-        let { player, enemies, projectiles, xpGems, explosions, orbitals, weapon, gameTime, kills, theme } = prev;
+        let { player, enemies, projectiles, xpGems, explosions, orbitals, weapon, gameTime, kills, theme, powerUps, activePowerUps } = prev;
 
         // Update game time
         gameTime += deltaTime;
@@ -283,6 +286,7 @@ export const Game: React.FC = () => {
         // Projectile-enemy collision
         const newXpGems: XpGem[] = [];
         const newExplosions: Explosion[] = [];
+        const newPowerUps: PowerUp[] = [];
         let projectilesToRemove: Set<string> = new Set();
         
         enemies = enemies.filter((enemy) => {
@@ -303,6 +307,11 @@ export const Game: React.FC = () => {
                 kills++;
                 pendingSoundsRef.current.explosions++;
                 newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
+                
+                // Chance to drop power-up
+                const powerUp = createPowerUp(enemy.x, enemy.y);
+                if (powerUp) newPowerUps.push(powerUp);
+                
                 const explosionColor = enemy.type === 'fast' ? 'hsl(30, 100%, 50%)' : 
                                        enemy.type === 'tank' ? 'hsl(0, 60%, 50%)' : 'hsl(0, 72%, 51%)';
                 newExplosions.push({
@@ -332,6 +341,11 @@ export const Game: React.FC = () => {
                 kills++;
                 pendingSoundsRef.current.explosions++;
                 newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
+                
+                // Chance to drop power-up
+                const powerUp = createPowerUp(enemy.x, enemy.y);
+                if (powerUp) newPowerUps.push(powerUp);
+                
                 // Orbital explosion - purple spiral effect
                 newExplosions.push({
                   id: `exp-orbital-${Date.now()}-${Math.random()}`,
@@ -353,13 +367,38 @@ export const Game: React.FC = () => {
 
         projectiles = projectiles.filter((p) => !projectilesToRemove.has(p.id));
         xpGems = [...xpGems, ...newXpGems];
+        powerUps = [...powerUps, ...newPowerUps];
         
         // Update explosions (filter expired ones)
         explosions = [...explosions.filter(exp => gameTime - exp.startTime < exp.duration), ...newExplosions];
 
-        // Player collects XP gems
-        const XP_COLLECT_RANGE = 50;
+        // Update active power-ups (remove expired ones)
+        activePowerUps = activePowerUps.filter(ap => ap.endTime > gameTime);
+        
+        // Check if player has active magnet - increase XP collect range
+        const hasMagnet = activePowerUps.some(ap => ap.type === 'magnet');
+        const hasShield = activePowerUps.some(ap => ap.type === 'shield');
+
+        // Player collects XP gems (magnet effect increases range)
+        const XP_COLLECT_RANGE = hasMagnet ? 200 : 50;
         let xpGained = 0;
+        
+        // With magnet, gems move toward player
+        if (hasMagnet) {
+          xpGems = xpGems.map(gem => {
+            const dist = distance(player.x, player.y, gem.x, gem.y);
+            if (dist < 300 && dist > 20) {
+              const dir = normalize(player.x - gem.x, player.y - gem.y);
+              return {
+                ...gem,
+                x: gem.x + dir.x * 300 * deltaTime,
+                y: gem.y + dir.y * 300 * deltaTime,
+              };
+            }
+            return gem;
+          });
+        }
+        
         xpGems = xpGems.filter((gem) => {
           const dist = distance(player.x, player.y, gem.x, gem.y);
           if (dist < XP_COLLECT_RANGE) {
@@ -371,6 +410,52 @@ export const Game: React.FC = () => {
 
         if (xpGained > 0) {
           player = { ...player, xp: player.xp + xpGained };
+        }
+
+        // Player collects power-ups
+        const POWERUP_COLLECT_RANGE = 40;
+        const newActivePowerUps: ActivePowerUp[] = [];
+        let bombTriggered = false;
+        
+        powerUps = powerUps.filter((pu) => {
+          const dist = distance(player.x, player.y, pu.x, pu.y);
+          if (dist < POWERUP_COLLECT_RANGE) {
+            if (pu.type === 'bomb') {
+              // Bomb: instant effect - kill all enemies on screen
+              bombTriggered = true;
+            } else {
+              // Shield/Magnet: add to active power-ups
+              newActivePowerUps.push({
+                type: pu.type,
+                endTime: gameTime + pu.duration,
+              });
+            }
+            return false;
+          }
+          return true;
+        });
+        
+        activePowerUps = [...activePowerUps, ...newActivePowerUps];
+        
+        // Handle bomb effect
+        if (bombTriggered) {
+          enemies.forEach(enemy => {
+            newExplosions.push({
+              id: `exp-bomb-${Date.now()}-${Math.random()}`,
+              x: enemy.x,
+              y: enemy.y,
+              startTime: gameTime,
+              duration: 0.4,
+              size: enemy.size * 2.5,
+              color: 'hsl(45, 100%, 50%)',
+            });
+            newXpGems.push(createXpGem(enemy.x, enemy.y, enemy.type === 'tank' ? 5 : enemy.type === 'fast' ? 2 : 3));
+            kills++;
+          });
+          enemies = [];
+          xpGems = [...xpGems, ...newXpGems];
+          explosions = [...explosions, ...newExplosions];
+          pendingSoundsRef.current.explosions++;
         }
 
         // Level up check
@@ -389,13 +474,15 @@ export const Game: React.FC = () => {
           pendingSoundsRef.current.levelUp = true;
         }
 
-        // Enemy-player collision (damage)
-        enemies.forEach((enemy) => {
-          const dist = distance(player.x, player.y, enemy.x, enemy.y);
-          if (dist < 20 + enemy.size) {
-            player = { ...player, health: player.health - enemy.damage * deltaTime };
-          }
-        });
+        // Enemy-player collision (damage) - shield blocks damage
+        if (!hasShield) {
+          enemies.forEach((enemy) => {
+            const dist = distance(player.x, player.y, enemy.x, enemy.y);
+            if (dist < 20 + enemy.size) {
+              player = { ...player, health: player.health - enemy.damage * deltaTime };
+            }
+          });
+        }
 
         // Check game over
         const isGameOver = player.health <= 0;
@@ -408,6 +495,8 @@ export const Game: React.FC = () => {
           xpGems,
           explosions,
           orbitals,
+          powerUps,
+          activePowerUps,
           gameTime,
           kills,
           isGameOver,
@@ -514,6 +603,7 @@ export const Game: React.FC = () => {
         isMobile={isMobileDevice}
         isMuted={isMuted}
         onToggleMute={toggleMute}
+        activePowerUps={gameState.activePowerUps}
       />
 
       {isMobile && <VirtualJoystick joystickPosition={joystickPosition} />}

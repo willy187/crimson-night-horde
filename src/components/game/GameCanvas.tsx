@@ -54,6 +54,70 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.stroke();
     }
 
+    // Draw power-ups
+    gameState.powerUps.forEach((powerUp) => {
+      ctx.save();
+      const pulseScale = 1 + Math.sin(gameState.gameTime * 5) * 0.15;
+      const size = 18 * pulseScale;
+      
+      // Glow effect
+      ctx.shadowBlur = 20;
+      
+      if (powerUp.type === 'shield') {
+        // Shield - cyan bubble
+        ctx.shadowColor = 'hsl(180, 100%, 50%)';
+        const gradient = ctx.createRadialGradient(powerUp.x, powerUp.y, 0, powerUp.x, powerUp.y, size);
+        gradient.addColorStop(0, 'hsla(180, 100%, 80%, 0.9)');
+        gradient.addColorStop(0.6, 'hsla(180, 100%, 50%, 0.7)');
+        gradient.addColorStop(1, 'hsla(180, 100%, 40%, 0.3)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(powerUp.x, powerUp.y, size, 0, Math.PI * 2);
+        ctx.fill();
+        // Shield icon
+        ctx.fillStyle = 'white';
+        ctx.font = `${size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🛡️', powerUp.x, powerUp.y);
+      } else if (powerUp.type === 'magnet') {
+        // Magnet - purple magnetic
+        ctx.shadowColor = 'hsl(280, 100%, 50%)';
+        const gradient = ctx.createRadialGradient(powerUp.x, powerUp.y, 0, powerUp.x, powerUp.y, size);
+        gradient.addColorStop(0, 'hsla(280, 100%, 80%, 0.9)');
+        gradient.addColorStop(0.6, 'hsla(280, 100%, 50%, 0.7)');
+        gradient.addColorStop(1, 'hsla(280, 100%, 40%, 0.3)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(powerUp.x, powerUp.y, size, 0, Math.PI * 2);
+        ctx.fill();
+        // Magnet icon
+        ctx.fillStyle = 'white';
+        ctx.font = `${size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🧲', powerUp.x, powerUp.y);
+      } else if (powerUp.type === 'bomb') {
+        // Bomb - orange/red explosive
+        ctx.shadowColor = 'hsl(30, 100%, 50%)';
+        const gradient = ctx.createRadialGradient(powerUp.x, powerUp.y, 0, powerUp.x, powerUp.y, size);
+        gradient.addColorStop(0, 'hsla(45, 100%, 70%, 0.9)');
+        gradient.addColorStop(0.6, 'hsla(30, 100%, 50%, 0.7)');
+        gradient.addColorStop(1, 'hsla(15, 100%, 40%, 0.3)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(powerUp.x, powerUp.y, size, 0, Math.PI * 2);
+        ctx.fill();
+        // Bomb icon
+        ctx.fillStyle = 'white';
+        ctx.font = `${size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💣', powerUp.x, powerUp.y);
+      }
+      ctx.restore();
+    });
+
     // Draw XP gems
     gameState.xpGems.forEach((gem) => {
       ctx.save();
@@ -285,6 +349,55 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       drawCatPlayer(ctx, gameState.player);
     } else {
       drawSpaceshipPlayer(ctx, gameState.player);
+    }
+
+    // Draw active power-up effects
+    const hasShield = gameState.activePowerUps.some(ap => ap.type === 'shield');
+    const hasMagnet = gameState.activePowerUps.some(ap => ap.type === 'magnet');
+    
+    if (hasShield) {
+      // Shield bubble around player
+      ctx.save();
+      const shieldPulse = 1 + Math.sin(gameState.gameTime * 8) * 0.1;
+      const shieldRadius = 40 * shieldPulse;
+      
+      ctx.strokeStyle = 'hsla(180, 100%, 60%, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = 'hsl(180, 100%, 50%)';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(gameState.player.x, gameState.player.y, shieldRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Inner glow
+      const innerGradient = ctx.createRadialGradient(
+        gameState.player.x, gameState.player.y, 0,
+        gameState.player.x, gameState.player.y, shieldRadius
+      );
+      innerGradient.addColorStop(0, 'hsla(180, 100%, 70%, 0)');
+      innerGradient.addColorStop(0.7, 'hsla(180, 100%, 60%, 0.1)');
+      innerGradient.addColorStop(1, 'hsla(180, 100%, 50%, 0.3)');
+      ctx.fillStyle = innerGradient;
+      ctx.beginPath();
+      ctx.arc(gameState.player.x, gameState.player.y, shieldRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    
+    if (hasMagnet) {
+      // Magnet field effect
+      ctx.save();
+      const magnetPulse = 1 + Math.sin(gameState.gameTime * 4) * 0.2;
+      const magnetRadius = 300 * magnetPulse;
+      
+      ctx.strokeStyle = 'hsla(280, 80%, 60%, 0.2)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.arc(gameState.player.x, gameState.player.y, magnetRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
   }, [gameState, canvasWidth, canvasHeight, theme]);

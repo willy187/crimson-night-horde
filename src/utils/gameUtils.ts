@@ -1,4 +1,4 @@
-import { Enemy, Player, Projectile, XpGem, Upgrade, Weapon, Orbital } from '@/types/game';
+import { Enemy, Player, Projectile, XpGem, Upgrade, Weapon, Orbital, PowerUp, PowerUpType } from '@/types/game';
 
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -112,6 +112,24 @@ export const createXpGem = (x: number, y: number, value: number): XpGem => ({
   y,
   value,
 });
+
+const POWER_UP_TYPES: PowerUpType[] = ['shield', 'magnet', 'bomb'];
+const POWER_UP_DROP_CHANCE = 0.08; // 8% chance
+
+export const createPowerUp = (x: number, y: number): PowerUp | null => {
+  if (Math.random() > POWER_UP_DROP_CHANCE) return null;
+  
+  const type = POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
+  const duration = type === 'bomb' ? 0 : type === 'shield' ? 5 : 8; // bomb is instant
+  
+  return {
+    id: generateId(),
+    x,
+    y,
+    type,
+    duration,
+  };
+};
 
 export const createOrbital = (existingOrbitals: Orbital[]): Orbital => {
   const baseAngle = existingOrbitals.length > 0 
