@@ -87,9 +87,26 @@ export interface Explosion {
   isOrbital?: boolean;
 }
 
+export type PowerUpType = 'shield' | 'magnet' | 'bomb';
+
+export interface PowerUp {
+  id: string;
+  x: number;
+  y: number;
+  type: PowerUpType;
+  duration: number; // How long the effect lasts
+}
+
+export interface ActivePowerUp {
+  type: PowerUpType;
+  endTime: number;
+}
+
 export interface GameState {
   player: Player;
   enemies: Enemy[];
+  powerUps: PowerUp[];
+  activePowerUps: ActivePowerUp[];
   projectiles: Projectile[];
   xpGems: XpGem[];
   explosions: Explosion[];

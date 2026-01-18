@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Player, Weapon } from '@/types/game';
+import { Player, Weapon, ActivePowerUp } from '@/types/game';
 import { Minimize2, Volume2, VolumeX } from 'lucide-react';
 
 interface GameHUDProps {
@@ -10,6 +10,7 @@ interface GameHUDProps {
   isMobile?: boolean;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  activePowerUps?: ActivePowerUp[];
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -20,6 +21,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   isMobile = false,
   isMuted = false,
   onToggleMute,
+  activePowerUps = [],
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -125,6 +127,29 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         
         <div className="mt-1 text-xs text-muted-foreground">PROJECTILES</div>
         <div className="text-sm text-primary">{weapon.projectileCount}</div>
+        
+        {/* Active power-ups */}
+        {activePowerUps.length > 0 && (
+          <div className="mt-3 pt-2 border-t border-primary/20">
+            <div className="text-xs text-muted-foreground mb-1">POWER-UPS</div>
+            <div className="flex gap-1 justify-end">
+              {activePowerUps.map((ap, idx) => {
+                const remaining = Math.max(0, ap.endTime - gameTime);
+                const icon = ap.type === 'shield' ? '🛡️' : ap.type === 'magnet' ? '🧲' : '💣';
+                return (
+                  <div 
+                    key={`${ap.type}-${idx}`}
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-primary/20 text-xs"
+                    title={`${ap.type} - ${remaining.toFixed(1)}s`}
+                  >
+                    <span>{icon}</span>
+                    <span className="text-primary font-mono">{remaining.toFixed(0)}s</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
